@@ -1,5 +1,9 @@
 # Magic Card Finder
 
+> **Note: This project is an exercise in using the Cursor IDE**
+> 
+> This project was created as a demonstration of using Cursor IDE with its built-in AI capabilities. The vast majority of the code in this repository was generated directly by Cursor using its integrated AI models. This serves as an example of how AI-assisted development can be used to rapidly prototype and build web applications.
+
 A modern web application for searching and exploring Magic: The Gathering cards using the Scryfall API.
 
 ![Magic Card Finder](https://raw.githubusercontent.com/Bonney/magic-card-finder/main/public/screenshot.png)
