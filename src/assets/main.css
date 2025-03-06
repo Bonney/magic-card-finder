@@ -1,0 +1,4 @@
+@import "tailwindcss";
+
+/* Import base styles if needed */
+@import './base.css';
