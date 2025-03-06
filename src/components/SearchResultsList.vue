@@ -19,6 +19,20 @@ const props = defineProps({
 
 const emit = defineEmits(['select-card', 'load-more']);
 
+// Filter functionality
+const filterText = ref('');
+const filteredResults = computed(() => {
+  if (!filterText.value.trim()) {
+    return props.results;
+  }
+  
+  const searchTerm = filterText.value.toLowerCase();
+  return props.results.filter(card => 
+    card.name.toLowerCase().includes(searchTerm) || 
+    (card.type_line && card.type_line.toLowerCase().includes(searchTerm))
+  );
+});
+
 // Get a thumbnail image for the card
 const getCardThumbnail = (card: ScryfallCard): string | null => {
   if (card.image_uris?.art_crop) {
@@ -43,6 +57,11 @@ const selectCard = (card: ScryfallCard) => {
 const loadMore = () => {
   emit('load-more');
 };
+
+// Clear filter
+const clearFilter = () => {
+  filterText.value = '';
+};
 </script>
 
 <template>
@@ -54,6 +73,25 @@ const loadMore = () => {
         <span v-else-if="loading">Searching...</span>
         <span v-else>No results</span>
       </h2>
+      
+      <!-- Filter input -->
+      <div class="relative w-64">
+        <input
+          v-model="filterText"
+          type="text"
+          placeholder="Filter results..."
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <button 
+          v-if="filterText" 
+          @click="clearFilter"
+          class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+          </svg>
+        </button>
+      </div>
     </div>
     
     <!-- Loading state -->
@@ -67,9 +105,15 @@ const loadMore = () => {
     
     <!-- Results list -->
     <div v-else-if="results.length > 0" class="bg-white rounded-lg shadow overflow-hidden">
+      <!-- Filter info -->
+      <div v-if="filterText && filteredResults.length !== results.length" class="bg-blue-50 px-4 py-2 text-sm text-blue-700 border-b border-blue-100">
+        Showing {{ filteredResults.length }} of {{ results.length }} cards
+        <button @click="clearFilter" class="ml-2 text-blue-600 hover:underline">Clear filter</button>
+      </div>
+      
       <ul class="divide-y divide-gray-200">
         <li 
-          v-for="card in results" 
+          v-for="card in filteredResults" 
           :key="card.id" 
           class="hover:bg-blue-50 transition-colors cursor-pointer"
           @click="selectCard(card)"
@@ -111,8 +155,14 @@ const loadMore = () => {
         </li>
       </ul>
       
+      <!-- No results after filtering -->
+      <div v-if="filterText && filteredResults.length === 0" class="p-8 text-center">
+        <p class="text-gray-600">No cards match your filter.</p>
+        <button @click="clearFilter" class="mt-2 text-blue-600 hover:underline">Clear filter</button>
+      </div>
+      
       <!-- Load more button -->
-      <div v-if="props.results.length < totalCards" class="p-4 bg-gray-50 border-t border-gray-200">
+      <div v-if="!filterText && props.results.length < totalCards" class="p-4 bg-gray-50 border-t border-gray-200">
         <button 
           @click="loadMore" 
           class="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
