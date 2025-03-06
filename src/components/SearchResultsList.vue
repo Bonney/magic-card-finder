@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import type { ScryfallCard } from '../services/ScryfallService';
 
 const props = defineProps({
@@ -85,6 +85,136 @@ const sortedResults = computed(() => {
   }
 });
 
+// Keyboard navigation
+const selectedIndex = ref(-1);
+const listRef = ref<HTMLElement | null>(null);
+const cardRefs = ref<HTMLElement[]>([]);
+
+// Reset selected index when results change
+const resetSelection = () => {
+  selectedIndex.value = -1;
+  cardRefs.value = [];
+};
+
+// Watch for changes in filtered results
+const updateCardRefs = () => {
+  // Wait for DOM to update
+  setTimeout(() => {
+    if (listRef.value) {
+      cardRefs.value = Array.from(listRef.value.querySelectorAll('li[data-card-index]'));
+    }
+  }, 100);
+};
+
+// Scroll to the selected card
+const scrollToSelectedCard = () => {
+  // Use setTimeout to ensure DOM is updated
+  setTimeout(() => {
+    if (selectedIndex.value >= 0 && selectedIndex.value < filteredResults.value.length) {
+      const selectedCard = document.querySelector(`li[data-card-index="${selectedIndex.value}"]`);
+      if (selectedCard) {
+        // Check if the element is not fully visible in the viewport
+        const rect = selectedCard.getBoundingClientRect();
+        const isVisible = (
+          rect.top >= 0 &&
+          rect.left >= 0 &&
+          rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+          rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+        );
+        
+        if (!isVisible) {
+          // Use scrollIntoView with specific options for better control
+          selectedCard.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest',
+            inline: 'nearest'
+          });
+        }
+      }
+    }
+  }, 10);
+};
+
+// Handle keyboard navigation
+const handleKeyDown = (event: KeyboardEvent) => {
+  // Only handle keyboard navigation when we have results
+  if (filteredResults.value.length === 0) return;
+  
+  // Focus filter input when pressing '/'
+  if (event.key === '/' && document.activeElement?.tagName !== 'INPUT') {
+    event.preventDefault();
+    const filterInput = document.querySelector('input[placeholder="Filter results..."]') as HTMLInputElement;
+    if (filterInput) {
+      filterInput.focus();
+    }
+    return;
+  }
+  
+  // Only handle arrow keys, Enter, and Escape when not in an input
+  if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'SELECT') {
+    if (event.key === 'Escape') {
+      (document.activeElement as HTMLElement).blur();
+      event.preventDefault();
+    }
+    return;
+  }
+  
+  switch (event.key) {
+    case 'ArrowDown':
+      event.preventDefault();
+      if (selectedIndex.value < filteredResults.value.length - 1) {
+        selectedIndex.value++;
+        scrollToSelectedCard();
+      }
+      break;
+    case 'ArrowUp':
+      event.preventDefault();
+      if (selectedIndex.value > 0) {
+        selectedIndex.value--;
+        scrollToSelectedCard();
+      } else if (selectedIndex.value === -1 && filteredResults.value.length > 0) {
+        // If nothing is selected yet, select the first item
+        selectedIndex.value = 0;
+        scrollToSelectedCard();
+      }
+      break;
+    case 'Home':
+      event.preventDefault();
+      if (filteredResults.value.length > 0) {
+        selectedIndex.value = 0;
+        scrollToSelectedCard();
+      }
+      break;
+    case 'End':
+      event.preventDefault();
+      if (filteredResults.value.length > 0) {
+        selectedIndex.value = filteredResults.value.length - 1;
+        scrollToSelectedCard();
+      }
+      break;
+    case 'Enter':
+      event.preventDefault();
+      if (selectedIndex.value >= 0 && selectedIndex.value < filteredResults.value.length) {
+        selectCard(filteredResults.value[selectedIndex.value]);
+      }
+      break;
+    case 'Escape':
+      event.preventDefault();
+      resetSelection();
+      break;
+  }
+};
+
+// Set up keyboard event listeners
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown);
+  updateCardRefs();
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeyDown);
+});
+
 // Get a thumbnail image for the card
 const getCardThumbnail = (card: ScryfallCard): string | null => {
   if (card.image_uris?.art_crop) {
@@ -119,6 +249,13 @@ const clearFilter = () => {
 const handleSortChange = (event: Event) => {
   const select = event.target as HTMLSelectElement;
   currentSort.value = select.value;
+  resetSelection();
+};
+
+// Watch for changes in filtered results to update card refs
+const watchFilteredResults = () => {
+  resetSelection();
+  updateCardRefs();
 };
 </script>
 
@@ -159,6 +296,7 @@ const handleSortChange = (event: Event) => {
             type="text"
             placeholder="Filter results..."
             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            @input="watchFilteredResults"
           />
           <button 
             v-if="filterText" 
@@ -170,6 +308,18 @@ const handleSortChange = (event: Event) => {
             </svg>
           </button>
         </div>
+      </div>
+    </div>
+    
+    <!-- Keyboard navigation help -->
+    <div class="mb-4 p-3 bg-gray-50 rounded-lg text-sm text-gray-600 border border-gray-200">
+      <p class="font-medium mb-1">Keyboard shortcuts:</p>
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+        <div><span class="font-mono bg-gray-200 px-1 rounded">↑/↓</span> Navigate cards</div>
+        <div><span class="font-mono bg-gray-200 px-1 rounded">Enter</span> Select card</div>
+        <div><span class="font-mono bg-gray-200 px-1 rounded">/</span> Focus filter</div>
+        <div><span class="font-mono bg-gray-200 px-1 rounded">Home/End</span> First/Last card</div>
+        <div><span class="font-mono bg-gray-200 px-1 rounded">Esc</span> Clear selection</div>
       </div>
     </div>
     
@@ -190,12 +340,17 @@ const handleSortChange = (event: Event) => {
         <button @click="clearFilter" class="ml-2 text-blue-600 hover:underline">Clear filter</button>
       </div>
       
-      <ul class="divide-y divide-gray-200">
+      <ul ref="listRef" class="divide-y divide-gray-200 max-h-[70vh] overflow-y-auto">
         <li 
-          v-for="card in filteredResults" 
+          v-for="(card, index) in filteredResults" 
           :key="card.id" 
-          class="hover:bg-blue-50 transition-colors cursor-pointer"
+          :data-card-index="index"
+          :class="[
+            'transition-colors cursor-pointer', 
+            selectedIndex === index ? 'bg-blue-100' : 'hover:bg-blue-50'
+          ]"
           @click="selectCard(card)"
+          @mouseover="selectedIndex = index"
         >
           <div class="flex items-center p-4">
             <!-- Card thumbnail -->
