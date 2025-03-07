@@ -66,14 +66,14 @@ const cardImage = computed(() => {
   
   if (isDoubleFaced.value && props.card.card_faces && props.card.card_faces[0].image_uris) {
     // For double-faced cards, use the front face
-    imageUrl = props.card.card_faces[0].image_uris.png || 
-               props.card.card_faces[0].image_uris.large || 
-               props.card.card_faces[0].image_uris.normal;
+    imageUrl = props.card.card_faces[0].image_uris.large || 
+               props.card.card_faces[0].image_uris.normal || 
+               props.card.card_faces[0].image_uris.png;
   } else if (props.card.image_uris) {
     // For regular cards
-    imageUrl = props.card.image_uris.png || 
-               props.card.image_uris.large || 
-               props.card.image_uris.normal;
+    imageUrl = props.card.image_uris.large || 
+               props.card.image_uris.normal || 
+               props.card.image_uris.png;
   }
   
   console.log('Card image URL:', imageUrl);
@@ -84,9 +84,9 @@ const cardImage = computed(() => {
 const backFaceImage = computed(() => {
   if (!isDoubleFaced.value || !props.card.card_faces || !props.card.card_faces[1].image_uris) return null;
   
-  const imageUrl = props.card.card_faces[1].image_uris.png || 
-                   props.card.card_faces[1].image_uris.large || 
-                   props.card.card_faces[1].image_uris.normal;
+  const imageUrl = props.card.card_faces[1].image_uris.large || 
+                   props.card.card_faces[1].image_uris.normal || 
+                   props.card.card_faces[1].image_uris.png;
   
   console.log('Back face image URL:', imageUrl);
   return imageUrl;
