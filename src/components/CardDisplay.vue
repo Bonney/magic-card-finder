@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, watch } from 'vue';
+import { PropType } from 'vue';
+import type { ScryfallCard } from '../services/ScryfallService';
 
 const props = defineProps({
   card: {
-    type: Object,
+    type: Object as PropType<ScryfallCard | undefined>,
     required: true
   },
   loading: {

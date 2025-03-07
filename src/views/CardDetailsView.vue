@@ -50,7 +50,10 @@ watch(() => props.id, () => {
         {{ error }}
       </div>
       
-      <CardDisplay :card="card" :loading="loading" />
+      <CardDisplay 
+        :card="card || undefined" 
+        :loading="loading" 
+      />
     </main>
   </div>
 </template> 

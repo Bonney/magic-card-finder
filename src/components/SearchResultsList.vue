@@ -46,12 +46,12 @@ const filteredResults = computed(() => {
 });
 
 // Rarity order for sorting
-const rarityOrder = {
+const rarityOrder: Record<string, number> = {
   'common': 1,
   'uncommon': 2,
   'rare': 3,
   'mythic': 4
-};
+} as const;
 
 // Sort results based on current sort option
 const sortedResults = computed(() => {
@@ -66,14 +66,14 @@ const sortedResults = computed(() => {
       return sorted.sort((a, b) => b.name.localeCompare(a.name));
     case 'rarity':
       return sorted.sort((a, b) => {
-        const rarityA = a.rarity?.toLowerCase() || 'common';
-        const rarityB = b.rarity?.toLowerCase() || 'common';
+        const rarityA = (a.rarity?.toLowerCase() || 'common') as string;
+        const rarityB = (b.rarity?.toLowerCase() || 'common') as string;
         return (rarityOrder[rarityA] || 0) - (rarityOrder[rarityB] || 0);
       });
     case 'rarity-desc':
       return sorted.sort((a, b) => {
-        const rarityA = a.rarity?.toLowerCase() || 'common';
-        const rarityB = b.rarity?.toLowerCase() || 'common';
+        const rarityA = (a.rarity?.toLowerCase() || 'common') as string;
+        const rarityB = (b.rarity?.toLowerCase() || 'common') as string;
         return (rarityOrder[rarityB] || 0) - (rarityOrder[rarityA] || 0);
       });
     case 'set':
