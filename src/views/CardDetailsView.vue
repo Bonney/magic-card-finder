@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import NavigationBar from '../components/NavigationBar.vue';
 import CardDisplay from '../components/CardDisplay.vue';
@@ -20,11 +20,7 @@ const loadCard = async () => {
   error.value = null;
   
   try {
-    if (props.id === 'random') {
-      card.value = await ScryfallService.getRandomCard();
-    } else {
-      card.value = await ScryfallService.getCard(props.id);
-    }
+    card.value = await ScryfallService.getCard(props.id);
   } catch (err: any) {
     error.value = err.message || 'Failed to load card details.';
     card.value = null;
@@ -33,8 +29,12 @@ const loadCard = async () => {
   }
 };
 
-// Load card on mount
+// Load card on mount and when ID changes
 onMounted(() => {
+  loadCard();
+});
+
+watch(() => props.id, () => {
   loadCard();
 });
 </script>

@@ -2,9 +2,11 @@
 import { ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import SearchBar from './SearchBar.vue';
+import { ScryfallService } from '../services/ScryfallService';
 
 const router = useRouter();
 const route = useRoute();
+const loadingRandom = ref(false);
 
 // Handle search
 const handleSearch = (query: string) => {
@@ -19,10 +21,20 @@ const handleSearch = (query: string) => {
 
 // Get a random card
 const getRandomCard = async () => {
-  router.push({
-    name: 'card-details',
-    params: { id: 'random' }
-  });
+  if (loadingRandom.value) return;
+  
+  loadingRandom.value = true;
+  try {
+    const randomCard = await ScryfallService.getRandomCard();
+    router.push({
+      name: 'card-details',
+      params: { id: randomCard.id }
+    });
+  } catch (err) {
+    console.error('Failed to get random card:', err);
+  } finally {
+    loadingRandom.value = false;
+  }
 };
 </script>
 
@@ -50,9 +62,11 @@ const getRandomCard = async () => {
         <!-- Random Card Button -->
         <button 
           @click="getRandomCard"
-          class="ml-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+          :disabled="loadingRandom"
+          class="ml-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Random Card
+          <span v-if="loadingRandom">Loading...</span>
+          <span v-else>Random Card</span>
         </button>
       </div>
     </div>
