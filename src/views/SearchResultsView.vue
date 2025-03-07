@@ -67,7 +67,7 @@ const selectCard = (card: ScryfallCard) => {
   router.push({
     name: 'card-details',
     params: { id: card.id },
-    query: { from: 'search', q: props.query }
+    query: { q: props.query }
   });
 };
 
