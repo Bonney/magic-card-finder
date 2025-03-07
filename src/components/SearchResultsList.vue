@@ -186,13 +186,13 @@ onBeforeUnmount(() => {
 });
 
 // Get a thumbnail image for the card
-const getCardThumbnail = (card: ScryfallCard): string | null => {
+const getCardThumbnail = (card: ScryfallCard): string | undefined => {
   if (card.image_uris?.art_crop) {
     return card.image_uris.art_crop;
   } else if (card.card_faces && card.card_faces[0]?.image_uris?.art_crop) {
     return card.card_faces[0].image_uris.art_crop;
   }
-  return null;
+  return undefined;
 };
 
 // Get card colors or mana cost for display

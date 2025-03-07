@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, watch } from 'vue';
-import { PropType } from 'vue';
+import type { PropType } from 'vue';
 import type { ScryfallCard } from '../services/ScryfallService';
 
 const props = defineProps({
@@ -57,7 +57,8 @@ const onBackImageError = (e: Event) => {
 
 // Check if the card is double-faced
 const isDoubleFaced = computed(() => {
-  return props.card && props.card.card_faces && props.card.card_faces.length > 1 && props.card.card_faces[0].image_uris;
+  if (!props.card?.card_faces) return false;
+  return props.card.card_faces.length > 1 && props.card.card_faces[0]?.image_uris != null;
 });
 
 // Get the appropriate image URI
@@ -66,7 +67,7 @@ const cardImage = computed(() => {
   
   let imageUrl = null;
   
-  if (isDoubleFaced.value && props.card.card_faces && props.card.card_faces[0].image_uris) {
+  if (isDoubleFaced.value && props.card.card_faces?.[0]?.image_uris) {
     // For double-faced cards, use the front face
     imageUrl = props.card.card_faces[0].image_uris.large || 
                props.card.card_faces[0].image_uris.normal || 
@@ -84,7 +85,7 @@ const cardImage = computed(() => {
 
 // Get the back face image if available
 const backFaceImage = computed(() => {
-  if (!isDoubleFaced.value || !props.card.card_faces || !props.card.card_faces[1].image_uris) return null;
+  if (!props.card?.card_faces?.[1]?.image_uris) return null;
   
   const imageUrl = props.card.card_faces[1].image_uris.large || 
                    props.card.card_faces[1].image_uris.normal || 
