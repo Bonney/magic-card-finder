@@ -123,100 +123,113 @@ watch(() => props.card, (newCard) => {
       <p class="mt-6 text-gray-500 text-lg">Loading card...</p>
     </div>
     
-    <div v-else-if="card" class="flex flex-col items-center">
+    <div v-else-if="card" class="flex flex-col items-center w-full max-w-6xl">
       <!-- Debug info (only in development) -->
       <div v-if="debugInfo" class="mb-4 p-2 bg-yellow-100 text-xs text-gray-700 rounded w-full max-w-md">
         <p>Debug: {{ debugInfo }}</p>
         <p v-if="cardImage">Image URL: {{ cardImage }}</p>
       </div>
       
-      <!-- Regular or front face of double-faced card -->
-      <div class="relative group" v-if="cardImage">
-        <!-- Loading placeholder -->
-        <div v-if="!frontImageLoaded && !frontImageError" class="w-72 h-96 rounded-lg bg-gray-200 animate-pulse flex items-center justify-center">
-          <p class="text-gray-500">Loading image...</p>
-        </div>
-        
-        <!-- Error fallback -->
-        <div v-if="frontImageError" class="w-72 h-96 rounded-lg bg-gray-100 flex flex-col items-center justify-center p-4 border border-gray-300">
-          <p class="text-red-500 mb-2">Image failed to load</p>
+      <!-- Card images container -->
+      <div :class="[
+        'w-full flex gap-8',
+        isDoubleFaced ? 'flex-col lg:flex-row justify-center items-center' : 'justify-center'
+      ]">
+        <!-- Regular or front face of double-faced card -->
+        <div class="relative group" v-if="cardImage">
+          <!-- Loading placeholder -->
+          <div v-if="!frontImageLoaded && !frontImageError" class="w-72 h-96 rounded-lg bg-gray-200 animate-pulse flex items-center justify-center">
+            <p class="text-gray-500">Loading image...</p>
+          </div>
+          
+          <!-- Error fallback -->
+          <div v-if="frontImageError" class="w-72 h-96 rounded-lg bg-gray-100 flex flex-col items-center justify-center p-4 border border-gray-300">
+            <p class="text-red-500 mb-2">Image failed to load</p>
+            <img 
+              v-if="artCropImage" 
+              :src="artCropImage" 
+              :alt="card.name + ' (art crop)'"
+              class="max-w-full rounded"
+            />
+            <p v-else class="text-gray-500">No image available</p>
+            <a 
+              :href="cardImage" 
+              target="_blank" 
+              class="mt-2 text-blue-500 text-sm underline"
+            >
+              Open image directly
+            </a>
+          </div>
+          
+          <!-- Direct image link for testing -->
+          <div class="mb-4 text-center">
+            <a 
+              :href="cardImage" 
+              target="_blank" 
+              class="text-blue-500 text-sm underline"
+            >
+              View image in new tab
+            </a>
+          </div>
+          
+          <!-- Front face label for double-faced cards -->
+          <div v-if="isDoubleFaced" class="text-center mb-3 text-gray-700 lg:absolute lg:-top-8 lg:left-0 lg:right-0">
+            <span class="bg-gray-200 px-3 py-1 rounded text-sm font-medium">Front Face</span>
+          </div>
+          
+          <!-- Actual image with explicit dimensions -->
           <img 
-            v-if="artCropImage" 
-            :src="artCropImage" 
-            :alt="card.name + ' (art crop)'"
-            class="max-w-full rounded"
+            v-show="!frontImageError"
+            :src="cardImage" 
+            :alt="card.name"
+            class="rounded-lg shadow-lg w-auto h-auto max-w-xs md:max-w-sm transition-transform duration-300 group-hover:scale-105"
+            style="min-height: 300px; min-width: 215px;"
+            @load="onFrontImageLoad"
+            @error="onFrontImageError"
+            crossorigin="anonymous"
           />
-          <p v-else class="text-gray-500">No image available</p>
-          <a 
-            :href="cardImage" 
-            target="_blank" 
-            class="mt-2 text-blue-500 text-sm underline"
-          >
-            Open image directly
-          </a>
         </div>
         
-        <!-- Direct image link for testing -->
-        <div class="mb-4 text-center">
-          <a 
-            :href="cardImage" 
-            target="_blank" 
-            class="text-blue-500 text-sm underline"
-          >
-            View image in new tab
-          </a>
+        <!-- Back face of double-faced card (if applicable) -->
+        <div class="relative group mt-8 lg:mt-0" v-if="backFaceImage">
+          <!-- Loading placeholder -->
+          <div v-if="!backImageLoaded && !backImageError" class="w-72 h-96 rounded-lg bg-gray-200 animate-pulse flex items-center justify-center">
+            <p class="text-gray-500">Loading back face...</p>
+          </div>
+          
+          <!-- Error fallback -->
+          <div v-if="backImageError" class="w-72 h-96 rounded-lg bg-gray-100 flex items-center justify-center p-4 border border-gray-300">
+            <p class="text-red-500">Back face image failed to load</p>
+            <a 
+              :href="backFaceImage" 
+              target="_blank" 
+              class="mt-2 text-blue-500 text-sm underline"
+            >
+              Open image directly
+            </a>
+          </div>
+          
+          <!-- Back face label -->
+          <div class="text-center mb-3 text-gray-700 lg:absolute lg:-top-8 lg:left-0 lg:right-0">
+            <span class="bg-gray-200 px-3 py-1 rounded text-sm font-medium">Back Face</span>
+          </div>
+          
+          <!-- Actual image with explicit dimensions -->
+          <img 
+            v-show="!backImageError"
+            :src="backFaceImage" 
+            :alt="`${card.name} (back face)`"
+            class="rounded-lg shadow-lg w-auto h-auto max-w-xs md:max-w-sm transition-transform duration-300 group-hover:scale-105"
+            style="min-height: 300px; min-width: 215px;"
+            @load="onBackImageLoad"
+            @error="onBackImageError"
+            crossorigin="anonymous"
+          />
         </div>
-        
-        <!-- Actual image with explicit dimensions -->
-        <img 
-          v-show="!frontImageError"
-          :src="cardImage" 
-          :alt="card.name"
-          class="rounded-lg shadow-lg w-auto h-auto max-w-xs md:max-w-sm transition-transform duration-300 group-hover:scale-105"
-          style="min-height: 300px; min-width: 215px;"
-          @load="onFrontImageLoad"
-          @error="onFrontImageError"
-          crossorigin="anonymous"
-        />
       </div>
       
-      <!-- Back face of double-faced card (if applicable) -->
-      <div class="relative group mt-8" v-if="backFaceImage">
-        <div class="text-center mb-3 text-gray-700">
-          <span class="bg-gray-200 px-3 py-1 rounded text-sm font-medium">Back Face</span>
-        </div>
-        
-        <!-- Loading placeholder -->
-        <div v-if="!backImageLoaded && !backImageError" class="w-72 h-96 rounded-lg bg-gray-200 animate-pulse flex items-center justify-center">
-          <p class="text-gray-500">Loading back face...</p>
-        </div>
-        
-        <!-- Error fallback -->
-        <div v-if="backImageError" class="w-72 h-96 rounded-lg bg-gray-100 flex items-center justify-center p-4 border border-gray-300">
-          <p class="text-red-500">Back face image failed to load</p>
-          <a 
-            :href="backFaceImage" 
-            target="_blank" 
-            class="mt-2 text-blue-500 text-sm underline"
-          >
-            Open image directly
-          </a>
-        </div>
-        
-        <!-- Actual image with explicit dimensions -->
-        <img 
-          v-show="!backImageError"
-          :src="backFaceImage" 
-          :alt="`${card.name} (back face)`"
-          class="rounded-lg shadow-lg w-auto h-auto max-w-xs md:max-w-sm transition-transform duration-300 group-hover:scale-105"
-          style="min-height: 300px; min-width: 215px;"
-          @load="onBackImageLoad"
-          @error="onBackImageError"
-          crossorigin="anonymous"
-        />
-      </div>
-      
-      <div class="mt-8 text-center max-w-lg">
+      <!-- Card information -->
+      <div class="mt-8 text-center max-w-2xl">
         <h2 class="text-2xl font-bold text-gray-800">{{ card.name }}</h2>
         <p class="text-gray-600 mt-2">{{ card.type_line }}</p>
         <p v-if="card.oracle_text" class="mt-4 text-gray-700">{{ card.oracle_text }}</p>
@@ -235,4 +248,8 @@ watch(() => props.card, (newCard) => {
       <p class="text-lg">No card to display. Try searching for a Magic: The Gathering card.</p>
     </div>
   </div>
-</template> 
+</template>
+
+<style scoped>
+/* Add any additional styles here if needed */
+</style> 
