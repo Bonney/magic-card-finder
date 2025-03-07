@@ -113,7 +113,7 @@ const backToResults = () => {
 
 <template>
   <div class="min-h-screen bg-gradient-to-b from-blue-50 to-indigo-100 py-16">
-    <div class="container mx-auto px-4">
+    <div class="w-full">
       <header class="flex flex-col items-center mb-16">
         <h1 class="text-4xl font-bold text-indigo-800 mb-4">Magic Card Finder</h1>
         <p class="text-gray-600 mb-12">Search for any Magic: The Gathering card and view its artwork</p>
