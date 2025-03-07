@@ -146,4 +146,35 @@ export class ScryfallService {
       throw error;
     }
   }
+
+  /**
+   * Get a specific card by ID
+   * @param id The Scryfall card ID
+   * @returns Promise with card data
+   */
+  static async getCard(id: string): Promise<ScryfallCard> {
+    try {
+      console.log(`Fetching card with ID: ${id}`);
+      const response = await fetch(`${API_BASE_URL}/cards/${id}`);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Scryfall API error:', errorData);
+        throw new Error(errorData.details || 'Card not found');
+      }
+      
+      const cardData = await response.json();
+      console.log('Card data received:', cardData);
+      
+      // Validate that we have image data
+      if (!cardData.image_uris && (!cardData.card_faces || !cardData.card_faces[0].image_uris)) {
+        throw new Error('No image data available for this card');
+      }
+      
+      return cardData;
+    } catch (error) {
+      console.error('Error fetching card:', error);
+      throw error;
+    }
+  }
 } 
