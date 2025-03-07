@@ -88,51 +88,10 @@ const sortedResults = computed(() => {
 // Keyboard navigation
 const selectedIndex = ref(-1);
 const listRef = ref<HTMLElement | null>(null);
-const cardRefs = ref<HTMLElement[]>([]);
 
 // Reset selected index when results change
 const resetSelection = () => {
   selectedIndex.value = -1;
-  cardRefs.value = [];
-};
-
-// Watch for changes in filtered results
-const updateCardRefs = () => {
-  // Wait for DOM to update
-  setTimeout(() => {
-    if (listRef.value) {
-      cardRefs.value = Array.from(listRef.value.querySelectorAll('li[data-card-index]'));
-    }
-  }, 100);
-};
-
-// Scroll to the selected card
-const scrollToSelectedCard = () => {
-  // Use setTimeout to ensure DOM is updated
-  setTimeout(() => {
-    if (selectedIndex.value >= 0 && selectedIndex.value < filteredResults.value.length) {
-      const selectedCard = document.querySelector(`li[data-card-index="${selectedIndex.value}"]`);
-      if (selectedCard) {
-        // Check if the element is not fully visible in the viewport
-        const rect = selectedCard.getBoundingClientRect();
-        const isVisible = (
-          rect.top >= 0 &&
-          rect.left >= 0 &&
-          rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-          rect.right <= (window.innerWidth || document.documentElement.clientWidth)
-        );
-        
-        if (!isVisible) {
-          // Use scrollIntoView with specific options for better control
-          selectedCard.scrollIntoView({
-            behavior: 'smooth',
-            block: 'nearest',
-            inline: 'nearest'
-          });
-        }
-      }
-    }
-  }, 10);
 };
 
 // Handle keyboard navigation
@@ -173,7 +132,6 @@ const handleKeyDown = (event: KeyboardEvent) => {
         selectedIndex.value--;
         scrollToSelectedCard();
       } else if (selectedIndex.value === -1 && filteredResults.value.length > 0) {
-        // If nothing is selected yet, select the first item
         selectedIndex.value = 0;
         scrollToSelectedCard();
       }
@@ -205,10 +163,22 @@ const handleKeyDown = (event: KeyboardEvent) => {
   }
 };
 
+// Scroll to the selected card
+const scrollToSelectedCard = () => {
+  if (selectedIndex.value >= 0 && selectedIndex.value < filteredResults.value.length) {
+    const selectedCard = document.querySelector(`[data-card-index="${selectedIndex.value}"]`);
+    if (selectedCard) {
+      selectedCard.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest'
+      });
+    }
+  }
+};
+
 // Set up keyboard event listeners
 onMounted(() => {
   window.addEventListener('keydown', handleKeyDown);
-  updateCardRefs();
 });
 
 onBeforeUnmount(() => {
@@ -255,14 +225,13 @@ const handleSortChange = (event: Event) => {
 // Watch for changes in filtered results to update card refs
 const watchFilteredResults = () => {
   resetSelection();
-  updateCardRefs();
 };
 </script>
 
 <template>
-  <div class="w-full max-w-4xl mx-auto">
+  <div class="w-full">
     <!-- Results header -->
-    <div class="mb-4 flex flex-col md:flex-row md:justify-between md:items-center gap-3">
+    <div class="mb-6 flex flex-col md:flex-row md:justify-between md:items-center gap-3 bg-white p-4 rounded-lg shadow-sm">
       <h2 class="text-xl font-semibold text-gray-800">
         <span v-if="!loading && totalCards > 0">{{ totalCards }} cards found</span>
         <span v-else-if="loading">Searching...</span>
@@ -275,7 +244,7 @@ const watchFilteredResults = () => {
           <select
             :value="currentSort"
             @change="handleSortChange"
-            class="appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 pr-8 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 pr-8 text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             <option disabled>Sort by</option>
             <option v-for="option in sortOptions" :key="option.value" :value="option.value">
@@ -295,7 +264,7 @@ const watchFilteredResults = () => {
             v-model="filterText"
             type="text"
             placeholder="Filter results..."
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             @input="watchFilteredResults"
           />
           <button 
@@ -312,7 +281,7 @@ const watchFilteredResults = () => {
     </div>
     
     <!-- Keyboard navigation help -->
-    <div class="mb-4 p-3 bg-gray-50 rounded-lg text-sm text-gray-600 border border-gray-200">
+    <div class="mb-6 p-3 bg-white rounded-lg text-sm text-gray-600 border border-gray-200 shadow-sm">
       <p class="font-medium mb-1">Keyboard shortcuts:</p>
       <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
         <div><span class="font-mono bg-gray-200 px-1 rounded">↑/↓</span> Navigate cards</div>
@@ -324,82 +293,73 @@ const watchFilteredResults = () => {
     </div>
     
     <!-- Loading state -->
-    <div v-if="loading && results.length === 0" class="py-8">
-      <div class="flex flex-col items-center">
-        <div class="w-full h-16 bg-gray-200 animate-pulse rounded-lg mb-4"></div>
-        <div class="w-full h-16 bg-gray-200 animate-pulse rounded-lg mb-4"></div>
-        <div class="w-full h-16 bg-gray-200 animate-pulse rounded-lg mb-4"></div>
+    <div v-if="loading && results.length === 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div v-for="i in 6" :key="i" class="bg-white rounded-lg shadow-sm p-4 animate-pulse">
+        <div class="w-16 h-16 bg-gray-200 rounded mb-4"></div>
+        <div class="h-6 bg-gray-200 rounded mb-2"></div>
+        <div class="h-4 bg-gray-200 rounded w-3/4"></div>
       </div>
     </div>
     
-    <!-- Results list -->
-    <div v-else-if="results.length > 0" class="bg-white rounded-lg shadow overflow-hidden">
+    <!-- Results grid -->
+    <div v-else-if="results.length > 0">
       <!-- Filter info -->
-      <div v-if="filterText && filteredResults.length !== sortedResults.length" class="bg-blue-50 px-4 py-2 text-sm text-blue-700 border-b border-blue-100">
+      <div v-if="filterText && filteredResults.length !== sortedResults.length" class="mb-4 bg-indigo-50 px-4 py-2 text-sm text-indigo-700 rounded-lg">
         Showing {{ filteredResults.length }} of {{ results.length }} cards
-        <button @click="clearFilter" class="ml-2 text-blue-600 hover:underline">Clear filter</button>
+        <button @click="clearFilter" class="ml-2 text-indigo-600 hover:underline">Clear filter</button>
       </div>
       
-      <ul ref="listRef" class="divide-y divide-gray-200 max-h-[70vh] overflow-y-auto">
-        <li 
+      <!-- Cards grid -->
+      <div ref="listRef" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div 
           v-for="(card, index) in filteredResults" 
           :key="card.id" 
           :data-card-index="index"
           :class="[
-            'transition-colors cursor-pointer', 
-            selectedIndex === index ? 'bg-blue-100' : 'hover:bg-blue-50'
+            'bg-white rounded-lg shadow-sm overflow-hidden transition-all cursor-pointer', 
+            selectedIndex === index ? 'ring-2 ring-indigo-500' : 'hover:shadow-md'
           ]"
           @click="selectCard(card)"
           @mouseover="selectedIndex = index"
         >
-          <div class="flex items-center p-4">
-            <!-- Card thumbnail -->
-            <div class="flex-shrink-0 w-16 h-16 bg-gray-200 rounded overflow-hidden">
-              <img 
-                v-if="getCardThumbnail(card)" 
-                :src="getCardThumbnail(card)" 
-                :alt="card.name" 
-                class="w-full h-full object-cover"
-              />
-              <div v-else class="w-full h-full flex items-center justify-center text-gray-400">
-                No image
+          <!-- Card content -->
+          <div class="p-4">
+            <div class="flex items-start space-x-4">
+              <!-- Card thumbnail -->
+              <div class="w-20 h-20 bg-gray-200 rounded overflow-hidden flex-shrink-0">
+                <img 
+                  v-if="getCardThumbnail(card)" 
+                  :src="getCardThumbnail(card)" 
+                  :alt="card.name" 
+                  class="w-full h-full object-cover"
+                />
+                <div v-else class="w-full h-full flex items-center justify-center text-gray-400">
+                  No image
+                </div>
               </div>
-            </div>
-            
-            <!-- Card info -->
-            <div class="ml-4 flex-1">
-              <div class="flex justify-between">
-                <h3 class="text-lg font-medium text-gray-900">{{ card.name }}</h3>
-                <span class="text-sm text-gray-500">{{ getCardColorInfo(card) }}</span>
+              
+              <!-- Card info -->
+              <div class="flex-1 min-w-0">
+                <div class="flex justify-between items-start">
+                  <h3 class="text-lg font-medium text-gray-900 truncate">{{ card.name }}</h3>
+                  <span class="text-sm text-gray-500 ml-2 flex-shrink-0">{{ getCardColorInfo(card) }}</span>
+                </div>
+                <p class="text-sm text-gray-600 mt-1">{{ card.type_line }}</p>
+                <div class="flex mt-2 flex-wrap gap-2">
+                  <span class="text-xs bg-gray-100 rounded px-2 py-1">{{ card.set_name }}</span>
+                  <span class="text-xs bg-gray-100 rounded px-2 py-1 capitalize">{{ card.rarity }}</span>
+                </div>
               </div>
-              <p class="text-sm text-gray-600">{{ card.type_line }}</p>
-              <div class="flex mt-1">
-                <span class="text-xs bg-gray-200 rounded px-2 py-1 mr-2">{{ card.set_name }}</span>
-                <span class="text-xs bg-gray-200 rounded px-2 py-1 capitalize">{{ card.rarity }}</span>
-              </div>
-            </div>
-            
-            <!-- Arrow icon -->
-            <div class="ml-4">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-              </svg>
             </div>
           </div>
-        </li>
-      </ul>
-      
-      <!-- No results after filtering -->
-      <div v-if="filterText && filteredResults.length === 0" class="p-8 text-center">
-        <p class="text-gray-600">No cards match your filter.</p>
-        <button @click="clearFilter" class="mt-2 text-blue-600 hover:underline">Clear filter</button>
+        </div>
       </div>
       
       <!-- Load more button -->
-      <div v-if="!filterText && props.results.length < totalCards" class="p-4 bg-gray-50 border-t border-gray-200">
+      <div v-if="!filterText && props.results.length < totalCards" class="mt-8 flex justify-center">
         <button 
           @click="loadMore" 
-          class="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
           :disabled="loading"
         >
           <span v-if="loading">Loading more...</span>
@@ -409,7 +369,7 @@ const watchFilteredResults = () => {
     </div>
     
     <!-- No results -->
-    <div v-else class="bg-white rounded-lg shadow p-8 text-center">
+    <div v-else class="bg-white rounded-lg shadow-sm p-8 text-center">
       <p class="text-gray-600">No cards found matching your search.</p>
       <p class="text-gray-500 text-sm mt-2">Try a different search term or check your spelling.</p>
     </div>

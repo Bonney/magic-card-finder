@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
+import NavigationBar from '../components/NavigationBar.vue';
 import SearchResultsList from '../components/SearchResultsList.vue';
 import { ScryfallService, type ScryfallCard } from '../services/ScryfallService';
 
@@ -74,6 +75,9 @@ const selectCard = (card: ScryfallCard) => {
 watch(() => props.query, (newQuery) => {
   if (newQuery) {
     searchCards(newQuery);
+  } else {
+    // Redirect to home if no query
+    router.push({ name: 'home' });
   }
 }, { immediate: true });
 
@@ -86,29 +90,25 @@ onMounted(() => {
 </script>
 
 <template>
-  <div>
-    <div class="mb-8">
-      <router-link 
-        to="/" 
-        class="inline-flex items-center text-indigo-600 hover:text-indigo-800"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
-        </svg>
-        Back to Search
-      </router-link>
-    </div>
-
-    <div v-if="error" class="max-w-md mx-auto p-5 bg-red-100 border border-red-300 rounded-lg text-red-700 mb-10">
-      {{ error }}
-    </div>
+  <div class="min-h-screen bg-gradient-to-b from-blue-50 to-indigo-100">
+    <!-- Navigation Bar -->
+    <NavigationBar />
     
-    <SearchResultsList 
-      :results="searchResults" 
-      :loading="loading" 
-      :totalCards="totalCards"
-      @select-card="selectCard"
-      @load-more="loadMoreResults"
-    />
+    <!-- Main Content -->
+    <main class="pt-20 px-4 sm:px-6 lg:px-8 pb-16">
+      <!-- Error Display -->
+      <div v-if="error" class="max-w-md mx-auto p-5 bg-red-100 border border-red-300 rounded-lg text-red-700 mb-10">
+        {{ error }}
+      </div>
+      
+      <!-- Search Results -->
+      <SearchResultsList 
+        :results="searchResults" 
+        :loading="loading" 
+        :totalCards="totalCards"
+        @select-card="selectCard"
+        @load-more="loadMoreResults"
+      />
+    </main>
   </div>
 </template> 
