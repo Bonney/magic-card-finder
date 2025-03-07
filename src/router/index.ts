@@ -22,6 +22,10 @@ const router = createRouter({
       name: 'card-details',
       component: CardDetailsView,
       props: true
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      redirect: '/'
     }
   ]
 })
