@@ -5,6 +5,12 @@
 
 const API_BASE_URL = 'https://api.scryfall.com';
 
+interface ScryfallError {
+  details: string;
+  status: number;
+  code: string;
+}
+
 export interface ScryfallCard {
   id: string;
   name: string;
@@ -46,6 +52,21 @@ export interface SearchResponse {
 }
 
 export class ScryfallService {
+  private static async handleResponse<T>(response: Response): Promise<T> {
+    if (!response.ok) {
+      const errorData = await response.json() as ScryfallError;
+      console.error('Scryfall API error:', errorData);
+      throw new Error(errorData.details || 'API request failed');
+    }
+    return response.json() as Promise<T>;
+  }
+
+  private static validateCardImageData(cardData: ScryfallCard): void {
+    if (!cardData.image_uris && (!cardData.card_faces?.[0]?.image_uris)) {
+      throw new Error('No image data available for this card');
+    }
+  }
+
   /**
    * Search for a card by name (exact match)
    * @param query The search query
@@ -56,20 +77,10 @@ export class ScryfallService {
       console.log(`Searching for card: ${query}`);
       const encodedQuery = encodeURIComponent(query);
       const response = await fetch(`${API_BASE_URL}/cards/named?fuzzy=${encodedQuery}`);
+      const cardData = await this.handleResponse<ScryfallCard>(response);
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Scryfall API error:', errorData);
-        throw new Error(errorData.details || 'Failed to fetch card data');
-      }
-      
-      const cardData = await response.json();
       console.log('Card data received:', cardData);
-      
-      // Validate that we have image data
-      if (!cardData.image_uris && (!cardData.card_faces || !cardData.card_faces[0].image_uris)) {
-        throw new Error('No image data available for this card');
-      }
+      this.validateCardImageData(cardData);
       
       return cardData;
     } catch (error) {
@@ -93,22 +104,10 @@ export class ScryfallService {
         : `${API_BASE_URL}/cards/search?q=${encodedQuery}&order=name&dir=asc&page=${page}`;
       
       const response = await fetch(url);
+      const searchData = await this.handleResponse<SearchResponse>(response);
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Scryfall API error:', errorData);
-        throw new Error(errorData.details || 'Failed to fetch search results');
-      }
-      
-      const searchData = await response.json();
       console.log('Search results received:', searchData);
-      
-      return {
-        data: searchData.data,
-        total_cards: searchData.total_cards,
-        has_more: searchData.has_more,
-        next_page: searchData.next_page
-      };
+      return searchData;
     } catch (error) {
       console.error('Error searching for cards:', error);
       throw error;
@@ -123,19 +122,14 @@ export class ScryfallService {
     try {
       console.log('Fetching random card');
       const response = await fetch(`${API_BASE_URL}/cards/random`);
+      const cardData = await this.handleResponse<ScryfallCard>(response);
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Scryfall API error:', errorData);
-        throw new Error(errorData.details || 'Failed to fetch random card');
-      }
-      
-      const cardData = await response.json();
       console.log('Random card data received:', cardData);
       
-      // Validate that we have image data
-      if (!cardData.image_uris && (!cardData.card_faces || !cardData.card_faces[0].image_uris)) {
-        // Try again if no image data (some special cards don't have images)
+      // Try again if no image data (some special cards don't have images)
+      try {
+        this.validateCardImageData(cardData);
+      } catch {
         console.log('No image data, trying again...');
         return this.getRandomCard();
       }
@@ -156,20 +150,10 @@ export class ScryfallService {
     try {
       console.log(`Fetching card with ID: ${id}`);
       const response = await fetch(`${API_BASE_URL}/cards/${id}`);
+      const cardData = await this.handleResponse<ScryfallCard>(response);
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Scryfall API error:', errorData);
-        throw new Error(errorData.details || 'Card not found');
-      }
-      
-      const cardData = await response.json();
       console.log('Card data received:', cardData);
-      
-      // Validate that we have image data
-      if (!cardData.image_uris && (!cardData.card_faces || !cardData.card_faces[0].image_uris)) {
-        throw new Error('No image data available for this card');
-      }
+      this.validateCardImageData(cardData);
       
       return cardData;
     } catch (error) {

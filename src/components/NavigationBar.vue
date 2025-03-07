@@ -7,6 +7,7 @@ import { ScryfallService } from '../services/ScryfallService';
 const router = useRouter();
 const route = useRoute();
 const loadingRandom = ref(false);
+const error = ref<string | null>(null);
 
 // Handle search
 const handleSearch = (query: string) => {
@@ -24,13 +25,16 @@ const getRandomCard = async () => {
   if (loadingRandom.value) return;
   
   loadingRandom.value = true;
+  error.value = null;
+  
   try {
     const randomCard = await ScryfallService.getRandomCard();
-    router.push({
+    await router.push({
       name: 'card-details',
       params: { id: randomCard.id }
     });
   } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Failed to get random card';
     console.error('Failed to get random card:', err);
   } finally {
     loadingRandom.value = false;
@@ -55,7 +59,7 @@ const getRandomCard = async () => {
           <SearchBar 
             :placeholder="'Search for any card...'" 
             @search="handleSearch"
-            :initial-value="route.query.q as string || ''"
+            :initial-value="route.query.q?.toString() || ''"
           />
         </div>
 
@@ -68,6 +72,14 @@ const getRandomCard = async () => {
           <span v-if="loadingRandom">Loading...</span>
           <span v-else>Random Card</span>
         </button>
+      </div>
+      
+      <!-- Error message -->
+      <div 
+        v-if="error" 
+        class="absolute top-full left-0 right-0 bg-red-100 text-red-700 px-4 py-2 text-sm"
+      >
+        {{ error }}
       </div>
     </div>
   </nav>
