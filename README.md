@@ -14,20 +14,58 @@ Magic Card Finder allows users to search for Magic: The Gathering cards by name,
 
 ## Features
 
-- **Card Search**: Search for Magic cards by name with real-time results
-- **Search Results List**: Browse through multiple matching cards with thumbnails and basic info
-- **Card Details**: View high-resolution card images and detailed information
+### Implemented Features
+- **Advanced Card Search**: Search for Magic cards by name with fuzzy matching and real-time results
+- **Search Results List**: 
+  - Browse through multiple matching cards with thumbnails and basic info
+  - Sort results by name, rarity, and set
+  - Filter results in real-time
+  - Keyboard navigation support
+  - Load more results with pagination
+- **Card Details View**: 
+  - High-resolution card images with fallback options
+  - Support for double-faced cards
+  - Detailed card information including oracle text
+  - Direct links to Scryfall for more information
 - **Random Card**: Discover random Magic cards with a single click
-- **Results Filtering**: Filter search results to quickly find specific cards
-- **Responsive Design**: Works seamlessly on desktop and mobile devices
+- **Modern UI/UX**:
+  - Responsive design for all screen sizes
+  - Loading states and error handling
+  - Smooth transitions and hover effects
+  - Debug information in development mode
+
+### Planned Features
+See [ToDo.md](./ToDo.md) for a complete list of planned features, including:
+- Card History Feature
+- Advanced Search Filters
+- Favorites System
+- Gallery View
+- Additional Animation Enhancements
 
 ## Technology Stack
 
-- **Vue.js 3**: Frontend framework with Composition API
-- **TypeScript**: Type-safe JavaScript
+- **Vue.js 3**: Frontend framework with Composition API and Vue Router
+- **TypeScript**: Type-safe JavaScript with full type definitions
 - **Tailwind CSS**: Utility-first CSS framework for styling
 - **Vite**: Next-generation frontend build tool
 - **Scryfall API**: Comprehensive Magic: The Gathering card database
+
+## Project Structure
+
+- `src/`
+  - `components/` - Vue components
+    - `NavigationBar.vue` - Main navigation and search interface
+    - `SearchBar.vue` - Search input component
+    - `SearchResultsList.vue` - Displays search results with sorting and filtering
+    - `CardDisplay.vue` - Displays detailed card information and images
+  - `views/` - Page components
+    - `HomeView.vue` - Landing page
+    - `SearchResultsView.vue` - Search results page
+    - `CardDetailsView.vue` - Individual card details page
+  - `services/`
+    - `ScryfallService.ts` - Type-safe Scryfall API integration
+  - `router/` - Vue Router configuration
+  - `assets/` - Static assets and styles
 
 ## Getting Started
 
@@ -75,20 +113,6 @@ yarn build
 
 The built files will be in the `dist` directory.
 
-## Project Structure
-
-- `src/components/` - Vue components
-  - `SearchBar.vue` - Search input component
-  - `SearchResultsList.vue` - Displays search results
-  - `CardDisplay.vue` - Displays detailed card information
-- `src/services/` - API services
-  - `ScryfallService.ts` - Handles API calls to Scryfall
-- `src/assets/` - Static assets and styles
-
-## Planned Enhancements
-
-See [ToDo.md](./ToDo.md) for a list of planned features and enhancements.
-
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
@@ -109,3 +133,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [Vue.js](https://vuejs.org/) for the excellent frontend framework
 - [Tailwind CSS](https://tailwindcss.com/) for the utility-first CSS framework
 - [Wizards of the Coast](https://company.wizards.com/) for creating Magic: The Gathering
+
+---
+*Last updated: March 7, 2025*
