@@ -2,6 +2,7 @@
 import { computed, ref, onMounted, watch } from 'vue';
 import type { PropType } from 'vue';
 import type { ScryfallCard } from '../services/ScryfallService';
+import CardDrawingOverlay from './CardDrawingOverlay.vue';
 
 const props = defineProps({
   card: {
@@ -69,14 +70,19 @@ const cardImage = computed(() => {
   
   if (isDoubleFaced.value && props.card.card_faces?.[0]?.image_uris) {
     // For double-faced cards, use the front face
-    imageUrl = props.card.card_faces[0].image_uris.large || 
-               props.card.card_faces[0].image_uris.normal || 
+    imageUrl = props.card.card_faces[0].image_uris.normal || 
+               props.card.card_faces[0].image_uris.large || 
                props.card.card_faces[0].image_uris.png;
   } else if (props.card.image_uris) {
     // For regular cards
-    imageUrl = props.card.image_uris.large || 
-               props.card.image_uris.normal || 
+    imageUrl = props.card.image_uris.normal || 
+               props.card.image_uris.large || 
                props.card.image_uris.png;
+  }
+  
+  // Add a cache-busting parameter to prevent CORS issues
+  if (imageUrl) {
+    imageUrl = `${imageUrl}?${Date.now()}`;
   }
   
   console.log('Card image URL:', imageUrl);
@@ -87,12 +93,15 @@ const cardImage = computed(() => {
 const backFaceImage = computed(() => {
   if (!props.card?.card_faces?.[1]?.image_uris) return null;
   
-  const imageUrl = props.card.card_faces[1].image_uris.large || 
-                   props.card.card_faces[1].image_uris.normal || 
+  const imageUrl = props.card.card_faces[1].image_uris.normal || 
+                   props.card.card_faces[1].image_uris.large || 
                    props.card.card_faces[1].image_uris.png;
   
-  console.log('Back face image URL:', imageUrl);
-  return imageUrl;
+  // Add a cache-busting parameter to prevent CORS issues
+  const finalUrl = imageUrl ? `${imageUrl}?${Date.now()}` : null;
+  
+  console.log('Back face image URL:', finalUrl);
+  return finalUrl;
 });
 
 // Get art crop for fallback
@@ -114,6 +123,13 @@ watch(() => props.card, (newCard) => {
     console.log('Card data:', JSON.stringify(newCard, null, 2));
   }
 }, { immediate: true, deep: true });
+
+// Add refs for card dimensions
+const cardWidth = ref(288); // w-72 = 18rem = 288px
+const cardHeight = ref(384); // Aspect ratio 5:7 for Magic cards
+
+// Add drawing mode state
+const isDrawingMode = ref(false);
 </script>
 
 <template>
@@ -124,6 +140,17 @@ watch(() => props.card, (newCard) => {
     </div>
     
     <div v-else-if="card" class="flex flex-col items-center w-full max-w-6xl">
+      <!-- Add drawing mode toggle -->
+      <div class="mb-4">
+        <button 
+          @click="isDrawingMode = !isDrawingMode"
+          class="px-4 py-2 rounded-lg"
+          :class="isDrawingMode ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700'"
+        >
+          {{ isDrawingMode ? 'Exit Drawing Mode' : 'Enter Drawing Mode' }}
+        </button>
+      </div>
+
       <!-- Debug info (only in development) -->
       <div v-if="debugInfo" class="mb-4 p-2 bg-yellow-100 text-xs text-gray-700 rounded w-full max-w-md">
         <p>Debug: {{ debugInfo }}</p>
@@ -177,17 +204,26 @@ watch(() => props.card, (newCard) => {
             <span class="bg-gray-200 px-3 py-1 rounded text-sm font-medium">Front Face</span>
           </div>
           
-          <!-- Actual image with explicit dimensions -->
-          <img 
-            v-show="!frontImageError"
-            :src="cardImage" 
-            :alt="card.name"
-            class="rounded-lg shadow-lg w-auto h-auto max-w-xs md:max-w-sm transition-transform duration-300 group-hover:scale-105"
-            style="min-height: 300px; min-width: 215px;"
-            @load="onFrontImageLoad"
-            @error="onFrontImageError"
-            crossorigin="anonymous"
-          />
+          <!-- Card container with drawing overlay -->
+          <div class="relative">
+            <img 
+              v-show="!frontImageError"
+              :src="cardImage" 
+              :alt="card.name"
+              class="rounded-lg shadow-lg w-auto h-auto max-w-xs md:max-w-sm transition-transform duration-300"
+              :class="{ 'group-hover:scale-105': !isDrawingMode }"
+              style="min-height: 300px; min-width: 215px;"
+              @load="onFrontImageLoad"
+              @error="onFrontImageError"
+              crossorigin="anonymous"
+              referrerpolicy="no-referrer"
+            />
+            <CardDrawingOverlay
+              v-if="isDrawingMode && frontImageLoaded"
+              :width="cardWidth"
+              :height="cardHeight"
+            />
+          </div>
         </div>
         
         <!-- Back face of double-faced card (if applicable) -->
@@ -214,17 +250,26 @@ watch(() => props.card, (newCard) => {
             <span class="bg-gray-200 px-3 py-1 rounded text-sm font-medium">Back Face</span>
           </div>
           
-          <!-- Actual image with explicit dimensions -->
-          <img 
-            v-show="!backImageError"
-            :src="backFaceImage" 
-            :alt="`${card.name} (back face)`"
-            class="rounded-lg shadow-lg w-auto h-auto max-w-xs md:max-w-sm transition-transform duration-300 group-hover:scale-105"
-            style="min-height: 300px; min-width: 215px;"
-            @load="onBackImageLoad"
-            @error="onBackImageError"
-            crossorigin="anonymous"
-          />
+          <!-- Card container with drawing overlay -->
+          <div class="relative">
+            <img 
+              v-show="!backImageError"
+              :src="backFaceImage" 
+              :alt="`${card.name} (back face)`"
+              class="rounded-lg shadow-lg w-auto h-auto max-w-xs md:max-w-sm transition-transform duration-300"
+              :class="{ 'group-hover:scale-105': !isDrawingMode }"
+              style="min-height: 300px; min-width: 215px;"
+              @load="onBackImageLoad"
+              @error="onBackImageError"
+              crossorigin="anonymous"
+              referrerpolicy="no-referrer"
+            />
+            <CardDrawingOverlay
+              v-if="isDrawingMode && backImageLoaded"
+              :width="cardWidth"
+              :height="cardHeight"
+            />
+          </div>
         </div>
       </div>
       
