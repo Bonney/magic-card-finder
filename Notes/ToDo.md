@@ -87,6 +87,12 @@ This document tracks completed and planned enhancements for the Magic: The Gathe
 - Mobile app version
 - Card rulings and errata display
 - Proxy printing support
+- Card drawing/annotation tools with:
+  - Color picker
+  - Line width adjustment
+  - Eraser tool
+  - Save/load functionality
+  - Undo/redo support
 
 ---
 

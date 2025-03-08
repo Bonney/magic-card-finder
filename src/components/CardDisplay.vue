@@ -2,7 +2,6 @@
 import { computed, ref, onMounted, watch } from 'vue';
 import type { PropType } from 'vue';
 import type { ScryfallCard } from '../services/ScryfallService';
-import CardDrawingOverlay from './CardDrawingOverlay.vue';
 
 const props = defineProps({
   card: {
@@ -123,13 +122,6 @@ watch(() => props.card, (newCard) => {
     console.log('Card data:', JSON.stringify(newCard, null, 2));
   }
 }, { immediate: true, deep: true });
-
-// Add refs for card dimensions
-const cardWidth = ref(288); // w-72 = 18rem = 288px
-const cardHeight = ref(384); // Aspect ratio 5:7 for Magic cards
-
-// Add drawing mode state
-const isDrawingMode = ref(false);
 </script>
 
 <template>
@@ -140,17 +132,6 @@ const isDrawingMode = ref(false);
     </div>
     
     <div v-else-if="card" class="flex flex-col items-center w-full max-w-6xl">
-      <!-- Add drawing mode toggle -->
-      <div class="mb-4">
-        <button 
-          @click="isDrawingMode = !isDrawingMode"
-          class="px-4 py-2 rounded-lg"
-          :class="isDrawingMode ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700'"
-        >
-          {{ isDrawingMode ? 'Exit Drawing Mode' : 'Enter Drawing Mode' }}
-        </button>
-      </div>
-
       <!-- Debug info (only in development) -->
       <div v-if="debugInfo" class="mb-4 p-2 bg-yellow-100 text-xs text-gray-700 rounded w-full max-w-md">
         <p>Debug: {{ debugInfo }}</p>
@@ -204,24 +185,18 @@ const isDrawingMode = ref(false);
             <span class="bg-gray-200 px-3 py-1 rounded text-sm font-medium">Front Face</span>
           </div>
           
-          <!-- Card container with drawing overlay -->
+          <!-- Card image -->
           <div class="relative">
             <img 
               v-show="!frontImageError"
               :src="cardImage" 
               :alt="card.name"
-              class="rounded-lg shadow-lg w-auto h-auto max-w-xs md:max-w-sm transition-transform duration-300"
-              :class="{ 'group-hover:scale-105': !isDrawingMode }"
+              class="rounded-lg shadow-lg w-auto h-auto max-w-xs md:max-w-sm transition-transform duration-300 group-hover:scale-105"
               style="min-height: 300px; min-width: 215px;"
               @load="onFrontImageLoad"
               @error="onFrontImageError"
               crossorigin="anonymous"
               referrerpolicy="no-referrer"
-            />
-            <CardDrawingOverlay
-              v-if="isDrawingMode && frontImageLoaded"
-              :width="cardWidth"
-              :height="cardHeight"
             />
           </div>
         </div>
@@ -250,24 +225,18 @@ const isDrawingMode = ref(false);
             <span class="bg-gray-200 px-3 py-1 rounded text-sm font-medium">Back Face</span>
           </div>
           
-          <!-- Card container with drawing overlay -->
+          <!-- Back face image -->
           <div class="relative">
             <img 
               v-show="!backImageError"
               :src="backFaceImage" 
               :alt="`${card.name} (back face)`"
-              class="rounded-lg shadow-lg w-auto h-auto max-w-xs md:max-w-sm transition-transform duration-300"
-              :class="{ 'group-hover:scale-105': !isDrawingMode }"
+              class="rounded-lg shadow-lg w-auto h-auto max-w-xs md:max-w-sm transition-transform duration-300 group-hover:scale-105"
               style="min-height: 300px; min-width: 215px;"
               @load="onBackImageLoad"
               @error="onBackImageError"
               crossorigin="anonymous"
               referrerpolicy="no-referrer"
-            />
-            <CardDrawingOverlay
-              v-if="isDrawingMode && backImageLoaded"
-              :width="cardWidth"
-              :height="cardHeight"
             />
           </div>
         </div>
