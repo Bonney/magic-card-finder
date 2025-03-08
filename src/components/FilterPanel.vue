@@ -140,7 +140,7 @@ const toggleType = (type: string) => {
             :key="color.value"
             @click="toggleColor(color.value)"
             :class="[
-              'px-3 py-1 rounded-full border transition-colors',
+              'px-3 py-1 rounded-full border transition-colors text-gray-700',
               filters.colors.includes(color.value)
                 ? 'bg-indigo-100 border-indigo-500 text-indigo-700'
                 : 'border-gray-300 hover:border-indigo-500'
@@ -160,7 +160,7 @@ const toggleType = (type: string) => {
             :key="type"
             @click="toggleType(type)"
             :class="[
-              'px-3 py-1 rounded-full border transition-colors',
+              'px-3 py-1 rounded-full border transition-colors text-gray-700',
               filters.types.includes(type)
                 ? 'bg-indigo-100 border-indigo-500 text-indigo-700'
                 : 'border-gray-300 hover:border-indigo-500'
@@ -180,7 +180,7 @@ const toggleType = (type: string) => {
             type="number"
             min="0"
             placeholder="Min"
-            class="w-24 px-3 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            class="w-24 px-3 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-700 placeholder-gray-400"
           />
           <span class="text-gray-500">to</span>
           <input
@@ -188,7 +188,7 @@ const toggleType = (type: string) => {
             type="number"
             min="0"
             placeholder="Max"
-            class="w-24 px-3 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            class="w-24 px-3 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-700 placeholder-gray-400"
           />
         </div>
       </div>
@@ -200,7 +200,7 @@ const toggleType = (type: string) => {
           v-model="filters.text"
           type="text"
           placeholder="Search in card text..."
-          class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-700 placeholder-gray-400"
         />
       </div>
 
