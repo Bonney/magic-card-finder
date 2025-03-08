@@ -131,10 +131,10 @@ export class ScryfallService {
         }
         
         // Add CMC filter
-        if (filters.cmc?.min !== null) {
+        if (filters.cmc?.min !== null && filters.cmc?.min !== undefined) {
           searchQuery += ` cmc>=${filters.cmc.min}`;
         }
-        if (filters.cmc?.max !== null) {
+        if (filters.cmc?.max !== null && filters.cmc?.max !== undefined) {
           searchQuery += ` cmc<=${filters.cmc.max}`;
         }
         

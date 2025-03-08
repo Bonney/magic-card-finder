@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
+import type { SearchFilters } from '../services/ScryfallService';
 
-// Define the filter state interface
-interface FilterState {
+// Define the filter state interface to match SearchFilters
+interface FilterState extends SearchFilters {
   colors: string[];
   types: string[];
-  set: string | null;
+  set: string | undefined;
   cmc: {
     min: number | null;
     max: number | null;
@@ -37,7 +38,7 @@ const typeOptions = [
 const filters = ref<FilterState>({
   colors: [],
   types: [],
-  set: null,
+  set: undefined,
   cmc: {
     min: null,
     max: null
@@ -96,7 +97,7 @@ const resetFilters = () => {
   filters.value = {
     colors: [],
     types: [],
-    set: null,
+    set: undefined,
     cmc: {
       min: null,
       max: null
