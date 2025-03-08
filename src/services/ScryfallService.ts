@@ -51,6 +51,17 @@ export interface SearchResponse {
   next_page?: string;
 }
 
+export interface SearchFilters {
+  colors?: string[];
+  types?: string[];
+  set?: string;
+  cmc?: {
+    min: number | null;
+    max: number | null;
+  };
+  text?: string;
+}
+
 export class ScryfallService {
   private static async handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
@@ -90,15 +101,50 @@ export class ScryfallService {
   }
 
   /**
-   * Search for cards by name (returns multiple results)
+   * Search for cards by name and advanced filters
    * @param query The search query
+   * @param filters Advanced search filters
    * @param page The page number to fetch (default: 1)
    * @returns Promise with search results
    */
-  static async searchCards(query: string, page = 1): Promise<SearchResponse> {
+  static async searchCards(query: string, filters?: SearchFilters, page = 1): Promise<SearchResponse> {
     try {
-      console.log(`Searching for cards with query: ${query}, page: ${page}`);
-      const encodedQuery = encodeURIComponent(`name:/${query}/`);
+      console.log(`Searching for cards with query: ${query}, filters:`, filters, `page: ${page}`);
+      
+      // Build the search query
+      let searchQuery = `name:/${query}/`;
+      
+      if (filters) {
+        // Add color filter
+        if (filters.colors?.length) {
+          searchQuery += ` c:${filters.colors.join('')}`;
+        }
+        
+        // Add type filter
+        if (filters.types?.length) {
+          searchQuery += ` (${filters.types.map(t => `t:${t}`).join(' OR ')})`;
+        }
+        
+        // Add set filter
+        if (filters.set) {
+          searchQuery += ` s:${filters.set}`;
+        }
+        
+        // Add CMC filter
+        if (filters.cmc?.min !== null) {
+          searchQuery += ` cmc>=${filters.cmc.min}`;
+        }
+        if (filters.cmc?.max !== null) {
+          searchQuery += ` cmc<=${filters.cmc.max}`;
+        }
+        
+        // Add text filter
+        if (filters.text?.trim()) {
+          searchQuery += ` o:"${filters.text.trim()}"`;
+        }
+      }
+      
+      const encodedQuery = encodeURIComponent(searchQuery);
       const url = page === 1 
         ? `${API_BASE_URL}/cards/search?q=${encodedQuery}&order=name&dir=asc` 
         : `${API_BASE_URL}/cards/search?q=${encodedQuery}&order=name&dir=asc&page=${page}`;

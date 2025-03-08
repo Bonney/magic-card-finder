@@ -3,7 +3,8 @@ import { ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import NavigationBar from '../components/NavigationBar.vue';
 import SearchResultsList from '../components/SearchResultsList.vue';
-import { ScryfallService, type ScryfallCard } from '../services/ScryfallService';
+import FilterPanel from '../components/FilterPanel.vue';
+import { ScryfallService, type ScryfallCard, type SearchFilters } from '../services/ScryfallService';
 
 const props = defineProps<{
   query?: string
@@ -16,14 +17,15 @@ const searchResults = ref<ScryfallCard[]>([]);
 const totalCards = ref(0);
 const hasMore = ref(false);
 const nextPage = ref<string | null>(null);
+const currentFilters = ref<SearchFilters | undefined>();
 
 // Search for cards
-const searchCards = async (query: string) => {
+const searchCards = async (query: string, filters?: SearchFilters) => {
   loading.value = true;
   error.value = null;
   
   try {
-    const response = await ScryfallService.searchCards(query);
+    const response = await ScryfallService.searchCards(query, filters);
     searchResults.value = response.data;
     totalCards.value = response.total_cards;
     hasMore.value = response.has_more;
@@ -50,7 +52,7 @@ const loadMoreResults = async () => {
     const page = url.searchParams.get('page');
     
     if (page) {
-      const response = await ScryfallService.searchCards(props.query, parseInt(page));
+      const response = await ScryfallService.searchCards(props.query, currentFilters.value, parseInt(page));
       searchResults.value = [...searchResults.value, ...response.data];
       hasMore.value = response.has_more;
       nextPage.value = response.next_page || null;
@@ -71,10 +73,26 @@ const selectCard = (card: ScryfallCard) => {
   });
 };
 
+// Handle filter changes
+const handleFilterChange = (filters: SearchFilters) => {
+  currentFilters.value = filters;
+  if (props.query) {
+    searchCards(props.query, filters);
+  }
+};
+
+// Handle filter reset
+const handleFilterReset = () => {
+  currentFilters.value = undefined;
+  if (props.query) {
+    searchCards(props.query);
+  }
+};
+
 // Watch for query changes
 watch(() => props.query, (newQuery) => {
   if (newQuery) {
-    searchCards(newQuery);
+    searchCards(newQuery, currentFilters.value);
   } else {
     // Redirect to home if no query
     router.push({ name: 'home' });
@@ -101,14 +119,26 @@ onMounted(() => {
         {{ error }}
       </div>
       
-      <!-- Search Results -->
-      <SearchResultsList 
-        :results="searchResults" 
-        :loading="loading" 
-        :totalCards="totalCards"
-        @select-card="selectCard"
-        @load-more="loadMoreResults"
-      />
+      <div class="flex flex-col lg:flex-row gap-6">
+        <!-- Filter Panel -->
+        <div class="lg:w-80">
+          <FilterPanel
+            @filter="handleFilterChange"
+            @reset="handleFilterReset"
+          />
+        </div>
+        
+        <!-- Search Results -->
+        <div class="flex-1">
+          <SearchResultsList 
+            :results="searchResults" 
+            :loading="loading" 
+            :totalCards="totalCards"
+            @select-card="selectCard"
+            @load-more="loadMoreResults"
+          />
+        </div>
+      </div>
     </main>
   </div>
 </template> 
